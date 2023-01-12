@@ -1,14 +1,38 @@
-/*!
- * base64id v0.1.0
- */
+function checkInt(
+  buf: Uint8Array,
+  value: number,
+  offset: number,
+  ext: number,
+  max: number,
+  min: number,
+) {
+  if (value > max || value < min) {
+    throw new RangeError('"value" argument is out of bounds');
+  }
+  if (offset + ext > buf.length) throw new RangeError("Index out of range");
+}
 
-import { randomBytes } from "https://deno.land/std@0.171.0/node/crypto.ts";
-import { Buffer } from "https://deno.land/std@0.171.0/node/buffer.ts";
+function writeInt32BE(array: Uint8Array, value: number, offset: number) {
+  offset = offset >>> 0;
+  checkInt(array, value, offset, 4, 0x7fffffff, -0x80000000);
+  if (value < 0) value = 0xffffffff + value + 1;
+  array[offset] = value >>> 24;
+  array[offset + 1] = value >>> 16;
+  array[offset + 2] = value >>> 8;
+  array[offset + 3] = value & 0xff;
+  return offset + 4;
+}
 
 let bytesBufferIndex: number | null = null;
-let bytesBuffer: Buffer | undefined;
+let bytesBuffer: Uint8Array | undefined;
 let isGeneratingBytes = false;
 let sequenceNumber = 0;
+
+function getRandomUint8Array(length: number): Uint8Array {
+  const array = new Uint8Array(length);
+  crypto.getRandomValues(array);
+  return array;
+}
 
 /**
  * Get random bytes
@@ -21,14 +45,14 @@ export function getRandomBytes(bytes: number) {
   bytes = bytes || 12;
 
   if (bytes > BUFFER_SIZE) {
-    return randomBytes(bytes);
+    return getRandomUint8Array(bytes);
   }
 
   const bytesInBuffer = parseInt((BUFFER_SIZE / bytes).toString());
   const threshold = parseInt((bytesInBuffer * 0.85).toString());
 
   if (!threshold) {
-    return randomBytes(bytes);
+    return getRandomUint8Array(bytes);
   }
 
   if (bytesBufferIndex == null) {
@@ -44,16 +68,15 @@ export function getRandomBytes(bytes: number) {
   if (bytesBufferIndex == -1 || bytesBufferIndex > threshold) {
     if (!isGeneratingBytes) {
       isGeneratingBytes = true;
-      randomBytes(BUFFER_SIZE, (_, bytes) => {
-        bytesBuffer = bytes;
-        bytesBufferIndex = 0;
-        isGeneratingBytes = false;
-      });
+      const bytes = getRandomUint8Array(BUFFER_SIZE);
+      bytesBuffer = bytes;
+      bytesBufferIndex = 0;
+      isGeneratingBytes = false;
     }
 
     // Fall back to sync call when no buffered bytes are available
     if (bytesBufferIndex == -1) {
-      return randomBytes(bytes);
+      return getRandomUint8Array(bytes);
     }
   }
 
@@ -72,13 +95,9 @@ export function getRandomBytes(bytes: number) {
  * (Original version from socket.io <http://socket.io>)
  */
 export function generateId() {
-  const rand = Buffer.alloc(15); // multiple of 3 for base64
-  if (!rand.writeInt32BE) {
-    return Math.abs(Math.random() * Math.random() * Date.now() | 0).toString() +
-      Math.abs(Math.random() * Math.random() * Date.now() | 0).toString();
-  }
+  const rand = new Uint8Array(15); // multiple of 3 for base64
   sequenceNumber = (sequenceNumber + 1) | 0;
-  rand.writeInt32BE(sequenceNumber, 11);
-  getRandomBytes(12).copy(rand);
-  return rand.toString("base64").replace(/\//g, "_").replace(/\+/g, "-");
+  writeInt32BE(rand, sequenceNumber, 11);
+  rand.set(getRandomBytes(12));
+  return btoa(String.fromCharCode(...rand)).replace(/\//g, "_").replace(/\+/g, "-");
 }
