@@ -5,17 +5,16 @@
 import { randomBytes } from "https://deno.land/std@0.171.0/node/crypto.ts";
 import { Buffer } from "https://deno.land/std@0.171.0/node/buffer.ts";
 
-/**
- * Get random bytes
- *
- * Uses a buffer if available, falls back to crypto.randomBytes
- */
-
 let bytesBufferIndex: number | null = null;
 let bytesBuffer: Buffer | undefined;
 let isGeneratingBytes = false;
 let sequenceNumber = 0;
 
+/**
+ * Get random bytes
+ *
+ * Uses a buffer if available, falls back to crypto.randomBytes
+ */
 export const getRandomBytes = function (bytes: number) {
   const BUFFER_SIZE = 4096;
 
