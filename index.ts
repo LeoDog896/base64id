@@ -2,8 +2,8 @@
  * base64id v0.1.0
  */
 
-import * as crypto from "https://deno.land/std@0.170.0/node/crypto.ts";
-import { Buffer } from "https://deno.land/std@0.170.0/node/buffer.ts";
+import { randomBytes } from "https://deno.land/std@0.171.0/node/crypto.ts";
+import { Buffer } from "https://deno.land/std@0.171.0/node/buffer.ts";
 
 /**
  * Get random bytes
@@ -22,14 +22,14 @@ const getRandomBytes = function (bytes: number) {
   bytes = bytes || 12;
 
   if (bytes > BUFFER_SIZE) {
-    return crypto.randomBytes(bytes);
+    return randomBytes(bytes);
   }
 
   const bytesInBuffer = parseInt((BUFFER_SIZE / bytes).toString());
   const threshold = parseInt((bytesInBuffer * 0.85).toString());
 
   if (!threshold) {
-    return crypto.randomBytes(bytes);
+    return randomBytes(bytes);
   }
 
   if (bytesBufferIndex == null) {
@@ -45,7 +45,7 @@ const getRandomBytes = function (bytes: number) {
   if (bytesBufferIndex == -1 || bytesBufferIndex > threshold) {
     if (!isGeneratingBytes) {
       isGeneratingBytes = true;
-      crypto.randomBytes(BUFFER_SIZE, (_, bytes) => {
+      randomBytes(BUFFER_SIZE, (_, bytes) => {
         bytesBuffer = bytes;
         bytesBufferIndex = 0;
         isGeneratingBytes = false;
@@ -54,7 +54,7 @@ const getRandomBytes = function (bytes: number) {
 
     // Fall back to sync call when no buffered bytes are available
     if (bytesBufferIndex == -1) {
-      return crypto.randomBytes(bytes);
+      return randomBytes(bytes);
     }
   }
 
