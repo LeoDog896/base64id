@@ -15,7 +15,7 @@ let sequenceNumber = 0;
  *
  * Uses a buffer if available, falls back to crypto.randomBytes
  */
-export function getRandomBytes (bytes: number) {
+export function getRandomBytes(bytes: number) {
   const BUFFER_SIZE = 4096;
 
   bytes = bytes || 12;
@@ -64,14 +64,14 @@ export function getRandomBytes (bytes: number) {
   bytesBufferIndex++;
 
   return result;
-};
+}
 
 /**
  * Generates a base64 id
  *
  * (Original version from socket.io <http://socket.io>)
  */
-export function generateId () {
+export function generateId() {
   const rand = Buffer.alloc(15); // multiple of 3 for base64
   if (!rand.writeInt32BE) {
     return Math.abs(Math.random() * Math.random() * Date.now() | 0).toString() +
@@ -81,4 +81,4 @@ export function generateId () {
   rand.writeInt32BE(sequenceNumber, 11);
   getRandomBytes(12).copy(rand);
   return rand.toString("base64").replace(/\//g, "_").replace(/\+/g, "-");
-};
+}
