@@ -16,7 +16,7 @@ let bytesBuffer: Buffer | undefined;
 let isGeneratingBytes = false;
 let sequenceNumber = 0;
 
-const getRandomBytes = function (bytes: number) {
+export const getRandomBytes = function (bytes: number) {
   const BUFFER_SIZE = 4096;
 
   bytes = bytes || 12;
